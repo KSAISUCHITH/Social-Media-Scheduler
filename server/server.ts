@@ -4,6 +4,8 @@ import cors from "cors";
 import connectDB from  "./config/db.js";
 import authRouter from "./routes/authRoutes.js";
 import socialAuthRouter from "./routes/SocialAuthRoutes.js";
+import accountRouter from "./routes/accountRoutes.js";
+import postRouter from "./routes/postRoutes.js";
 
 const app = express();
 
@@ -24,6 +26,8 @@ app.get('/', (_req: Request, res: Response) => {
 
 app.use("/api/auth",authRouter)
 app.use("/api/oauth", socialAuthRouter)
+app.use("/api/accounts",accountRouter)
+app.use("api/posts",postRouter)
 
 
 
