@@ -148,13 +148,4 @@ npm start
 - Add E2E tests for scheduling flow (mock Zernio).
 - Harden error handling and retry logic for publish failures.
 
-**License**
-MIT
 
----
-
-If you want, I can:  
-- add example `.env.example`,  
-- generate a simple GitHub Actions CI file, or  
-- update `server/services/schedulerService.ts` to log full Zernio responses for easier debugging.  
-Which should I do next? 
