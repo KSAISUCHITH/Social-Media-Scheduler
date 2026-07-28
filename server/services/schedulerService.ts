@@ -27,7 +27,7 @@ export const initScheduler = ()=>{
 
 
                     const zernioPlatforms = accounts.map((acc)=>({
-                        tform: acc.platform as any,
+                        platform: acc.platform as any,
                         accountId: acc.zernioAccountId!
                     }))
 
@@ -38,10 +38,8 @@ export const initScheduler = ()=>{
                         platforms:zernioPlatforms,
                     }
 
-
                     console.log(`Publish post ${post._id} to Zernio with media: ${post.mediaUrl || "none"}`)
-
-
+                    console.log('Zernio payload:', JSON.stringify(payload));
 
                     const response = await zernio.posts.createPost({
                         body:payload
@@ -71,13 +69,13 @@ export const initScheduler = ()=>{
                     })
 
                 } catch (error: any) {
-
-                    console.error(`Failed to publish post ${post._id} : `, error?.response?.data || error?.message);
+                    const status = error?.response?.status;
+                    const data = error?.response?.data;
+                    console.error(`Failed to publish post ${post._id} : status=${status} message=${error?.message}`);
+                    if (status) console.error('Zernio response status:', status);
+                    if (data) console.error('Zernio response body:', JSON.stringify(data));
                     post.status = "failed";
-                    await post.save()
-
-
-                    
+                    await post.save();
                 }
                 
             }

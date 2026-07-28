@@ -27,12 +27,15 @@ export const generatePost = async (req:AuthRequest,res: Response):Promise<void> 
                     res.status(400).json({message: "Gemini API Key is missing."})
                     return;
                 }
+              
+
 
 
                 const ai = new GoogleGenAI({apiKey});
+                const model = process.env.GENAI_MODEL || "gemini-3.5-flash-lite";
                 //Generate content
                 const textResponse = await ai.models.generateContent({
-                 model: "gemini-2.5-flash",
+                 model,
                   contents: `Generate a social media post based on this prompt: "${prompt}".
                   Tone: ${tone}. 
                   Include relevant hashtags.
@@ -44,6 +47,8 @@ export const generatePost = async (req:AuthRequest,res: Response):Promise<void> 
 
                    let content="";
                    let imagePrompt = prompt;
+                  
+
 
                    try {
                         const rawText = textResponse.text || "";
@@ -58,55 +63,52 @@ export const generatePost = async (req:AuthRequest,res: Response):Promise<void> 
                       content = textResponse.text || ""
                    }
 
-                   let mediaUrl ="";
-                   let TempUrl=""
+                   let mediaUrl = "";
+                   let TempUrl = "";
 
                   if (generateImage) {
-  try {
-    const HF_TOKEN = process.env.HF_TOKEN;
+                    try {
+                      const HF_TOKEN = process.env.HF_TOKEN;
+                      const hfImageModel = process.env.HF_IMAGE_MODEL || "stabilityai/stable-diffusion-xl-base-1.0";
 
-    if (HF_TOKEN) {
-      const HFresponse = await axios.post(
-        "https://router.huggingface.co/nscale/v1/images/generations",
-        {
-          model: "black-forest-labs/FLUX.1-schnell",
-          prompt: imagePrompt,
-          response_format: "b64_json",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${HF_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+                      if (!HF_TOKEN) {
+                        throw new Error("Hugging Face token is missing. Set HF_TOKEN in your environment.");
+                      }
 
-      // Base64 image returned by Hugging Face
-      const base64Image = HFresponse.data.data[0].b64_json;
+                      const hfImageEndpoint =process.env.HF_IMAGE_ENDPOINT ||`https://api-inference.huggingface.co/models/${hfImageModel}`;
 
-      // Convert to data URL so it can be displayed directly
-      TempUrl = `data:image/png;base64,${base64Image}`;
+                      const HFresponse = await axios.post(
+                        hfImageEndpoint,
+                        { inputs: imagePrompt },
+                        {
+                          headers: {
+                            Authorization: `Bearer ${HF_TOKEN}`,
+                          },
+                          responseType: "arraybuffer",
+                        }
+                      );
 
-      //Upload to cloudinary for persistance
+                      const responseContentType = HFresponse.headers["content-type"] as string | undefined;
+                      if (!responseContentType?.startsWith("image/")) {
+                        const body = Buffer.from(HFresponse.data).toString("utf8");
+                        throw new Error(`Hugging Face returned non-image data: ${body}`);
+                      }
 
-      const uploadResult = await cloudinary.uploader.upload(TempUrl,{
-        folder:"ai-generations",
-      })
+                      const base64Image = Buffer.from(HFresponse.data).toString("base64");
+                      TempUrl = `data:${responseContentType};base64,${base64Image}`;
 
-      mediaUrl = uploadResult.secure_url;
-   
-   
+                      const uploadResult = await cloudinary.uploader.upload(TempUrl, {
+                        folder: "ai-generations",
+                      });
 
-    }
-
-    
-  } catch (error: any) {
-    console.error(
-      "Hugging Face Image Error:",
-      error.response?.data || error.message
-    );
-  }
-}
+                      mediaUrl = uploadResult.secure_url;
+                    } catch (error: any) {
+                      console.error(
+                        "Hugging Face Image Error:",
+                        error.response?.data || error.message
+                      );
+                    }
+                  }
 
         //Save generation to DB
 
@@ -172,6 +174,13 @@ export const schedulePosts = async (req:AuthRequest,res: Response):Promise<void>
         try {
             const {content,platforms,scheduledFor, status} = req.body;
 
+            console.log("schedulePosts body:", { content, platforms, scheduledFor, status });
+            console.log("schedulePosts file:", req.file ? {
+                originalname: req.file.originalname,
+                size: req.file.size,
+                mimetype: req.file.mimetype,
+            } : null);
+
             //Parse platforms if it comes as a stringifies array from FormData
 
             let parsedPlatforms = platforms;
@@ -223,6 +232,8 @@ export const schedulePosts = async (req:AuthRequest,res: Response):Promise<void>
                 platforms: parsedPlatforms,
                 scheduledFor,
                 status,
+                mediaUrl,
+                mediaType,
               
 
 
@@ -230,6 +241,7 @@ export const schedulePosts = async (req:AuthRequest,res: Response):Promise<void>
 
             })
 
+            console.log('Saved scheduled post:', { id: post._id, mediaUrl: post.mediaUrl, mediaType: post.mediaType, scheduledFor: post.scheduledFor });
             res.status(201).json(post);
 
 

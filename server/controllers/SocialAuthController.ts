@@ -10,31 +10,44 @@ import { AuthRequest } from "../middleware/authMiddleware.js";
 
 const getOrCreateZernioProfile = async (user:any) :  Promise<string>=>{
 
+    if(!user?._id){
+        throw new Error("Authenticated user is missing from request")
+    }
+
     try {
+        if(user?.zernioProfileId){
+            return user.zernioProfileId;
+        }
+
         const result = await zernio.profiles.listProfiles()
         const data = result.data as any;
-        const profiles: any[] = Array.isArray(data) ? data: data?.profiles || data?.data || [];
+        const profiles: any[] = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.data)
+            ? data.data
+            : data?.profiles || data?.data || [];
+
         if(profiles.length > 0){
             const pid = profiles[0]._id || profiles[0].id;
+            if(!pid){
+                console.error("Zernio profile entry missing ID:", JSON.stringify(profiles[0], null, 2))
+                throw new Error("Zernio returned a profile without an ID")
+            }
             await User.findByIdAndUpdate(user._id,{zernioProfileId: pid})
             return pid;
         }
 
         const createResult = await zernio.profiles.createProfile({
-            body: {name: `${user.name || user.email} workspace `} as any,
-
+            body: {name: `${user.name || user.email} workspace`} as any,
         })
 
-        const created = (createResult.data as any)?.profile || createResult.data;
-
-        const pid = created?._id || created?._id;
-
+        const created = (createResult.data as any)?.profile || (createResult.data as any)?.data || createResult.data;
+        const pid = created?._id || created?.id || created?.profile?._id || created?.profile?.id;
 
         if(!pid){
+            console.error("createProfile response missing ID:", createResult.data)
             throw new Error("Failed to create Zernio profile - no ID returned")
         }
-
-
 
         await User.findByIdAndUpdate(user._id,{zernioProfileId: pid})
         return pid;
@@ -164,7 +177,7 @@ export const syncAccounts = async(req: AuthRequest,res: Response): Promise<void>
 
 
         }
-        res.json(syncAccounts)
+        res.json(syncedAccounts)
 
 
         
