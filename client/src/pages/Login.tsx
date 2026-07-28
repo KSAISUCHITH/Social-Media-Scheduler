@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MailIcon, LockIcon, ArrowRightIcon, User2Icon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -14,7 +15,7 @@ export default function Login() {
     const navigate = useNavigate();
     const {login,user} = useAuth()
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setLoading(true);
             try {
@@ -25,8 +26,8 @@ export default function Login() {
                 login(data,data.token)
 
                 navigate("/dashboard")
-            } catch (error) {
-                toast.error(error.response?.data?.message || error?.message)
+            } catch (error: any) {
+                toast.error(error?.response?.data?.message || error?.message)
             }
             finally{
                 setLoading(false);

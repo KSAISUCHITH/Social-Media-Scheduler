@@ -1,4 +1,3 @@
-import React from "react";
 import {useState,useEffect} from 'react';
 import { PLATFORMS} from "../assets/assets";
 import { PlusIcon} from "lucide-react";
