@@ -14,6 +14,7 @@ A social media scheduling platform built with the MERN stack, integrated with AI
 - Server: server/
 - Scheduler service: server/services/schedulerService.ts
 - Zernio config: server/config/Zernio.ts
+ - Live demo: https://social-media-scheduler-silk.vercel.app
 
 **Architecture (overview)**
 
