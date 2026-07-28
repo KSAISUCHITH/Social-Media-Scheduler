@@ -20,15 +20,15 @@ A social media scheduling platform built with the MERN stack, integrated with AI
 ```mermaid
 flowchart LR
   subgraph Client
-    A[Browser / React (Vite + TS)]
+    A["Browser / React (Vite + TS)"]
   end
 
   subgraph Server
-    B[Express + TypeScript]
-    B -->|stores| DB[(MongoDB / Mongoose)]
-    B -->|uploads media| Cloud[Cloudinary]
-    B -->|calls| Zernio[Zernio API]
-    B -->|calls| AI[Google Gemini / Hugging Face]
+    B["Express + TypeScript"]
+    B -->|stores| DB["MongoDB / Mongoose"]
+    B -->|uploads media| Cloud["Cloudinary"]
+    B -->|calls| Zernio["Zernio API"]
+    B -->|calls| AI["Google Gemini / Hugging Face"]
   end
 
   A --> |REST / GraphQL| B
@@ -42,12 +42,12 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-  participant U as User (Browser)
-  participant C as Server (API)
-  participant DB as MongoDB
-  participant CL as Cloudinary
-  participant SCH as Scheduler (node-cron)
-  participant Z as Zernio
+  participant U as "User (Browser)"
+  participant C as "Server (API)"
+  participant DB as "MongoDB"
+  participant CL as "Cloudinary"
+  participant SCH as "Scheduler (node-cron)"
+  participant Z as "Zernio"
 
   U->>C: POST /api/posts (content, media file, platforms, scheduledFor)
   C->>CL: upload media
@@ -65,12 +65,14 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-  Client[Client (Vite + React + TS)] -->|API| Server[Server (Express + TS)]
-  Server --> MongoDB[(MongoDB)]
-  Server --> Cloudinary[Cloudinary]
-  Server --> Zernio[Zernio]
-  Server --> GoogleGemini[Google Gemini]
-  Server --> HuggingFace[Hugging Face]
+  Client["Client (Vite + React + TS)"]
+  Server["Server (Express + TS)"]
+  Client --> Server
+  Server --> MongoDB["MongoDB"]
+  Server --> Cloudinary["Cloudinary"]
+  Server --> Zernio["Zernio"]
+  Server --> GoogleGemini["Google Gemini"]
+  Server --> HuggingFace["Hugging Face"]
 ```
 
 **Project setup (local)**
